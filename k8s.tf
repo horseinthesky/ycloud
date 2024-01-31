@@ -1,3 +1,19 @@
+locals {
+  ssh_pairs = {
+    horseinthesky = [
+      file("~/.ssh/id_ed25519.pub"),
+    ]
+  }
+}
+
+variable "k8s-pod-ipv4-range" {
+  default = "192.168.0.0/16"
+}
+
+variable "k8s-service-ipv4-range" {
+  default = "10.255.255.0/24"
+}
+
 resource "yandex_kubernetes_cluster" "k8s" {
   name       = "default"
   network_id = data.yandex_vpc_network.default.id
@@ -26,8 +42,8 @@ resource "yandex_kubernetes_cluster" "k8s" {
   service_account_id      = yandex_iam_service_account.jim.id
   node_service_account_id = yandex_iam_service_account.jim.id
 
-  cluster_ipv4_range = "192.168.0.0/16"
-  service_ipv4_range = "10.255.255.0/24"
+  cluster_ipv4_range = var.k8s-pod-ipv4-range
+  service_ipv4_range = var.k8s-service-ipv4-range
 }
 
 resource "yandex_kubernetes_node_group" "k8s-nodes" {
@@ -52,8 +68,18 @@ resource "yandex_kubernetes_node_group" "k8s-nodes" {
       nat = true
       subnet_ids = [
         data.yandex_vpc_subnet.a.id,
+        data.yandex_vpc_subnet.b.id,
         data.yandex_vpc_subnet.d.id,
       ]
+    }
+
+    metadata = {
+      ssh-keys = join("\n", flatten([
+        for username, ssh_keys in local.ssh_pairs : [
+          for key in ssh_keys
+          : "${username}:${key}"
+        ]
+      ]))
     }
   }
 
@@ -65,10 +91,13 @@ resource "yandex_kubernetes_node_group" "k8s-nodes" {
 
   allocation_policy {
     location {
-      zone      = "ru-central1-a"
+      zone = "ru-central1-a"
     }
     location {
-      zone      = "ru-central1-d"
+      zone = "ru-central1-b"
+    }
+    location {
+      zone = "ru-central1-d"
     }
   }
 
