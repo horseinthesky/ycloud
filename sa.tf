@@ -3,8 +3,8 @@ resource "yandex_iam_service_account" "jim" {
   description = "a nice guy"
 }
 
-resource "yandex_resourcemanager_folder_iam_member" "editor" {
-  role      = "editor"
-  folder_id = var.folder-id
-  member    = "serviceAccount:${yandex_iam_service_account.jim.id}"
+resource "yandex_resourcemanager_cloud_iam_member" "editor" {
+  role     = "editor"
+  cloud_id = var.cloud-id
+  member   = "serviceAccount:${yandex_iam_service_account.jim.id}"
 }
