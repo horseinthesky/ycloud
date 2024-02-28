@@ -55,13 +55,13 @@ resource "yandex_kubernetes_node_group" "k8s-nodes" {
     platform_id = "standard-v3" # Ice Lake
 
     resources {
-      cores  = 2
-      memory = 4
+      cores  = 4
+      memory = 8
     }
 
     boot_disk {
       type = "network-hdd"
-      size = 64
+      size = 32
     }
 
     network_interface {
